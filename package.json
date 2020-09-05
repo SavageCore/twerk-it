@@ -16,7 +16,7 @@
 		"test": "npm run lint",
 		"start": "electron .",
 		"pack": "electron-builder --dir",
-		"dist": "electron-builder --macos --linux --windows",
+		"dist": "electron-builder --macos --linux --windows -c.mac.identity=null",
 		"dist-win": "electron-builder --windows",
 		"release": "np"
 	},
