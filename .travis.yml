@@ -7,3 +7,7 @@ node_js: '12'
 script:
   - npm test
   - npm run dist
+addons:
+  apt:
+    packages:
+      - libxtst-dev
