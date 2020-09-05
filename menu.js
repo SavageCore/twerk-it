@@ -7,12 +7,15 @@ const {
 	aboutMenuItem,
 	openUrlMenuItem,
 	openNewGitHubIssue,
-	debugInfo
+	debugInfo,
+	activeWindow
 } = require('electron-util');
 const config = require('./config');
 
-const showPreferences = () => {
+const showPreferences = async () => {
 	// Show the app's preferences here
+	const win = activeWindow();
+	await win.loadFile(path.join(__dirname, 'preferences.html'));
 };
 
 const helpSubmenu = [
@@ -99,34 +102,34 @@ const macosTemplate = [
 				showPreferences();
 			}
 		}
-	]),
-	{
-		role: 'fileMenu',
-		submenu: [
-			{
-				label: 'Custom'
-			},
-			{
-				type: 'separator'
-			},
-			{
-				role: 'close'
-			}
-		]
-	},
-	{
-		role: 'editMenu'
-	},
-	{
-		role: 'viewMenu'
-	},
-	{
-		role: 'windowMenu'
-	},
-	{
-		role: 'help',
-		submenu: helpSubmenu
-	}
+	])
+	// {
+	// 	role: 'fileMenu',
+	// 	submenu: [
+	// 		{
+	// 			label: 'Custom'
+	// 		},
+	// 		{
+	// 			type: 'separator'
+	// 		},
+	// 		{
+	// 			role: 'close'
+	// 		}
+	// 	]
+	// },
+	// {
+	// 	role: 'editMenu'
+	// },
+	// {
+	// 	role: 'viewMenu'
+	// },
+	// {
+	// 	role: 'windowMenu'
+	// },
+	// {
+	// 	role: 'help',
+	// 	submenu: helpSubmenu
+	// }
 ];
 
 // Linux and Windows
@@ -134,12 +137,12 @@ const otherTemplate = [
 	{
 		role: 'fileMenu',
 		submenu: [
-			{
-				label: 'Custom'
-			},
-			{
-				type: 'separator'
-			},
+			// {
+			// 	label: 'Custom'
+			// },
+			// {
+			// 	type: 'separator'
+			// },
 			{
 				label: 'Settings',
 				accelerator: 'Control+,',
@@ -154,17 +157,17 @@ const otherTemplate = [
 				role: 'quit'
 			}
 		]
-	},
-	{
-		role: 'editMenu'
-	},
-	{
-		role: 'viewMenu'
-	},
-	{
-		role: 'help',
-		submenu: helpSubmenu
 	}
+	// {
+	// 	role: 'editMenu'
+	// },
+	// {
+	// 	role: 'viewMenu'
+	// },
+	// {
+	// 	role: 'help',
+	// 	submenu: helpSubmenu
+	// }
 ];
 
 const template = process.platform === 'darwin' ? macosTemplate : otherTemplate;

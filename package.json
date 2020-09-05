@@ -1,14 +1,14 @@
 {
-	"name": "app-name",
-	"productName": "App Name",
+	"name": "twerk-it",
+	"productName": "TwerkIT",
 	"version": "0.0.0",
 	"description": "The best app ever",
 	"license": "MIT",
-	"repository": "sindresorhus/electron-boilerplate",
+	"repository": "SavageCore/twerk-it",
 	"author": {
-		"name": "Your Name",
-		"email": "user@gmail.com",
-		"url": "https://sindresorhus.com"
+		"name": "SavageCore",
+		"email": "talk@savagecore.eu",
+		"url": "https://savagecore.eu"
 	},
 	"scripts": {
 		"postinstall": "electron-builder install-app-deps",
@@ -17,6 +17,7 @@
 		"start": "electron .",
 		"pack": "electron-builder --dir",
 		"dist": "electron-builder --macos --linux --windows",
+		"dist-win": "electron-builder --windows",
 		"release": "np"
 	},
 	"dependencies": {
@@ -25,11 +26,13 @@
 		"electron-store": "^5.1.0",
 		"electron-unhandled": "^3.0.0",
 		"electron-updater": "^4.0.6",
-		"electron-util": "^0.13.0"
+		"electron-util": "^0.13.0",
+		"robotjs": "git+ssh://git@github.com/SavageCore/robotjs.git#master"
 	},
 	"devDependencies": {
 		"electron": "^7.1.1",
 		"electron-builder": "^21.2.0",
+		"electron-reloader": "^1.0.1",
 		"np": "^5.0.3",
 		"xo": "^0.25.3"
 	},
@@ -44,7 +47,7 @@
 		"releaseDraft": false
 	},
 	"build": {
-		"appId": "com.company.AppName",
+		"appId": "eu.savagecore.twerkit",
 		"mac": {
 			"category": "public.app-category.social-networking",
 			"darkModeSupport": true

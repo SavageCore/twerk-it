@@ -1,20 +1,24 @@
 'use strict';
 const path = require('path');
-const {app, BrowserWindow, Menu} = require('electron');
+const {app, BrowserWindow, Menu, globalShortcut, ipcMain, Tray} = require('electron');
 /// const {autoUpdater} = require('electron-updater');
-const {is} = require('electron-util');
 const unhandled = require('electron-unhandled');
 const debug = require('electron-debug');
 const contextMenu = require('electron-context-menu');
 const config = require('./config');
 const menu = require('./menu');
+const robot = require('robotjs');
 
 unhandled();
 debug();
 contextMenu();
 
+try {
+	require('electron-reloader')(module);
+} catch (_) { }
+
 // Note: Must match `build.appId` in package.json
-app.setAppUserModelId('com.company.AppName');
+app.setAppUserModelId('eu.savagecore.twerkit');
 
 // Uncomment this before publishing your first version.
 // It's commented out as it throws an error if there are no published versions.
@@ -35,20 +39,47 @@ const createMainWindow = async () => {
 		title: app.name,
 		show: false,
 		width: 600,
-		height: 400
+		height: 400,
+		webPreferences: {
+			nodeIntegration: false,
+			preload: `${__dirname}/preload.js`
+		},
+		resizable: false,
+		icon: `${__dirname}/img/icon.ico`
 	});
 
 	win.on('ready-to-show', () => {
 		win.show();
 	});
 
-	win.on('closed', () => {
-		// Dereference the window
-		// For multiple windows store them in an array
-		mainWindow = undefined;
+	win.on('close', event => {
+		event.preventDefault();
+		mainWindow.hide();
 	});
 
+	const tray = new Tray(path.join(__dirname, '/img/icon.ico'));
+
 	await win.loadFile(path.join(__dirname, 'index.html'));
+
+	const contextMenu = Menu.buildFromTemplate([
+		{
+			label: 'Show App', click() {
+				mainWindow.show();
+			}
+		},
+		{
+			label: 'Quit', click() {
+				mainWindow.destroy();
+				app.quit();
+			}
+		}
+	]);
+
+	tray.setContextMenu(contextMenu);
+
+	tray.on('double-click', () => {
+		mainWindow.show();
+	});
 
 	return win;
 };
@@ -68,12 +99,6 @@ app.on('second-instance', () => {
 	}
 });
 
-app.on('window-all-closed', () => {
-	if (!is.macos) {
-		app.quit();
-	}
-});
-
 app.on('activate', async () => {
 	if (!mainWindow) {
 		mainWindow = await createMainWindow();
@@ -85,6 +110,80 @@ app.on('activate', async () => {
 	Menu.setApplicationMenu(menu);
 	mainWindow = await createMainWindow();
 
-	const favoriteAnimal = config.get('favoriteAnimal');
-	mainWindow.webContents.executeJavaScript(`document.querySelector('header p').textContent = 'Your favorite animal is ${favoriteAnimal}'`);
+	if (await config.get('enabledOnStart') === true) {
+		registerKeybinds();
+	}
+
+	ipcMain.on('send', async (event, data) => {
+		if (typeof data.message.keybinds !== 'undefined') {
+			if (data.message.keybinds === 'toggle') {
+				if (config.get('keybindsEnabled') === true) {
+					unregisterKeybinds();
+				} else {
+					registerKeybinds();
+				}
+			}
+		}
+
+		if (typeof data.message.save !== 'undefined') {
+			if (data.message.save === true) {
+				for (const key of Object.keys(data.message.data)) {
+					if (key === 'startOnBoot') {
+						app.setLoginItemSettings({
+							openAtLogin: data.message.data[key]
+						});
+					}
+
+					config.set(key, data.message.data[key]);
+				}
+			}
+		}
+
+		if (typeof data.message.page !== 'undefined') {
+			loadPage(data.message.page);
+		}
+	});
 })();
+
+function registerKeybinds() {
+	config.set('keybindsEnabled', true);
+	robot.setKeyboardDelay(50);
+	let twerkInterval;
+
+	mainWindow.webContents.executeJavaScript('document.querySelector(\'#status\').textContent = \'Idle\'');
+	mainWindow.webContents.executeJavaScript('document.querySelector(\'#toggle-keybinds > span\').textContent = \'Disable\'');
+
+	globalShortcut.register('CommandOrControl+num1', () => {
+		mainWindow.webContents.executeJavaScript('document.querySelector(\'#status\').textContent = \'Twerking\'');
+		twerkInterval = setInterval(async () => {
+			robot.keyTap('shift');
+		}, 100);
+	});
+
+	globalShortcut.register('CommandOrControl+numdec', () => {
+		clearInterval(twerkInterval);
+		mainWindow.webContents.executeJavaScript('document.querySelector(\'#status\').textContent = \'Idle\'');
+	});
+}
+
+function unregisterKeybinds() {
+	config.set('keybindsEnabled', false);
+	mainWindow.webContents.executeJavaScript('document.querySelector(\'#toggle-keybinds > span\').textContent = \'Enable\'');
+	mainWindow.webContents.executeJavaScript('document.querySelector(\'#status\').textContent = \'Keybinds disabled\'');
+	globalShortcut.unregister('CommandOrControl+num1');
+	globalShortcut.unregister('CommandOrControl+numdec');
+}
+
+async function loadPage(page) {
+	await mainWindow.loadFile(path.join(__dirname, `${page}.html`));
+	if (page === 'preferences') {
+		console.log('Loaded preferences');
+		const enabledOnStart = config.get('enabledOnStart');
+		console.log('enabledOnStart', enabledOnStart);
+		if (enabledOnStart === true) {
+			mainWindow.webContents.executeJavaScript('document.querySelector(\'#enabledOnStart\').checked = \'true\'');
+		} else {
+			mainWindow.webContents.executeJavaScript('document.querySelector(\'#enabledOnStart\').checked = \'false\'');
+		}
+	}
+}
