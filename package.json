@@ -73,6 +73,7 @@
 				"deb"
 			],
 			"category": "Network;Chat"
-		}
+		},
+		"npmRebuild": false
 	}
 }
