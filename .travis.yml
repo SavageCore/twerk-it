@@ -11,3 +11,5 @@ addons:
   apt:
     packages:
       - libxtst-dev
+env:
+  - DEBUG=electron-builder
